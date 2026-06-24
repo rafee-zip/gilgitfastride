@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bike, Clock, ShieldCheck, MapPin, Package, FileText, Pill, Utensils, ShoppingBag } from "lucide-react";
+import { ArrowRight, Clock, ShieldCheck, MapPin, Package, FileText, Pill, Utensils, ShoppingBag } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { Button } from "@/components/ui/button";
+import { ReviewsCard } from "@/components/ReviewsCard";
+import { DeliveryBackdrop } from "@/components/DeliveryBackdrop";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,7 +22,8 @@ function Index() {
     <SiteLayout>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-accent/40 via-background to-background" />
+        <div className="absolute inset-0 -z-20 bg-gradient-to-br from-accent/40 via-background to-background" />
+        <DeliveryBackdrop />
         <div className="absolute -top-24 right-0 -z-10 h-72 w-72 rounded-full bg-primary/15 blur-3xl" />
         <div className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24 sm:pb-28 lg:grid lg:grid-cols-2 lg:gap-12">
           <div>
@@ -62,34 +65,7 @@ function Index() {
           </div>
 
           <div className="mt-12 lg:mt-0">
-            <div className="relative mx-auto aspect-square max-w-md">
-              <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-primary to-primary-glow shadow-elevated" />
-              <div className="absolute inset-4 rounded-[1.75rem] bg-background/95 p-6 backdrop-blur">
-                <div className="flex h-full flex-col">
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                      <Bike className="h-6 w-6" />
-                    </div>
-                    <span className="rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">Live</span>
-                  </div>
-                  <div className="mt-6 space-y-4">
-                    <Step icon={MapPin} title="Pickup" subtitle="Jutial Bazaar, Gilgit" />
-                    <div className="ml-5 h-6 w-px bg-border" />
-                    <Step icon={MapPin} title="Drop-off" subtitle="Konodas, Gilgit" />
-                  </div>
-                  <div className="mt-auto rounded-xl bg-secondary p-4">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Estimated</span>
-                      <span className="font-semibold text-foreground">Rs. 250</span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>ETA</span>
-                      <span className="font-semibold text-foreground">35 min</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ReviewsCard />
           </div>
         </div>
       </section>
@@ -132,19 +108,5 @@ function Index() {
         </div>
       </section>
     </SiteLayout>
-  );
-}
-
-function Step({ icon: Icon, title, subtitle }: { icon: typeof MapPin; title: string; subtitle: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">{title}</div>
-        <div className="text-sm font-semibold text-foreground">{subtitle}</div>
-      </div>
-    </div>
   );
 }
