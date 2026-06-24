@@ -188,41 +188,9 @@ function OrderPage() {
   };
 
   if (confirmed) {
-    return (
-      <SiteLayout>
-        <section className="mx-auto max-w-2xl px-4 py-20 sm:px-6">
-          <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-elevated">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
-              <CheckCircle2 className="h-8 w-8" />
-            </div>
-            <h1 className="mt-6 font-display text-3xl font-extrabold text-foreground">Order received!</h1>
-            <p className="mt-2 text-muted-foreground">We've notified our team. A rider will confirm shortly.</p>
-            <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 font-mono text-sm font-semibold text-primary">
-              {confirmed.code}
-              <button
-                onClick={() => { navigator.clipboard.writeText(confirmed.code); toast.success("Order ID copied"); }}
-                className="text-primary/70 hover:text-primary"
-                aria-label="Copy order ID"
-              ><Copy className="h-4 w-4" /></button>
-            </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Button asChild size="lg" className="h-12">
-                <a href={confirmed.whatsappLink} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="mr-2 h-4 w-4" /> Send details on WhatsApp
-                </a>
-              </Button>
-              <Button variant="outline" size="lg" className="h-12" onClick={() => { setConfirmed(null); setForm(INITIAL); }}>
-                Place another order
-              </Button>
-            </div>
-            <button onClick={() => navigate({ to: "/my-orders" })} className="mt-6 block w-full text-sm text-muted-foreground underline-offset-4 hover:underline">
-              Sign in to track this order →
-            </button>
-          </div>
-        </section>
-      </SiteLayout>
-    );
+    return <OrderConfirmation code={confirmed.code} whatsappLink={confirmed.whatsappLink} onReset={() => { setConfirmed(null); setForm(INITIAL); }} />;
   }
+
 
   return (
     <SiteLayout>
