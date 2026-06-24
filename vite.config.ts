@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Force-enable the Nitro deploy plugin and target Vercel so `vite build`
+  // emits the Vercel Build Output API directory (.vercel/output) instead of the
+  // default Cloudflare/plain dist build. This makes the app deploy on Vercel.
+  nitro: {
+    preset: "vercel",
+  },
 });
