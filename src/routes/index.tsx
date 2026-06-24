@@ -110,17 +110,3 @@ function Index() {
     </SiteLayout>
   );
 }
-
-function Step({ icon: Icon, title, subtitle }: { icon: typeof MapPin; title: string; subtitle: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">{title}</div>
-        <div className="text-sm font-semibold text-foreground">{subtitle}</div>
-      </div>
-    </div>
-  );
-}
