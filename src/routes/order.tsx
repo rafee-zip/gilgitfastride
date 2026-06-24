@@ -343,3 +343,74 @@ function AddressField({ label, value, onChange, onGps, placeholder }: {
     </div>
   );
 }
+
+function OrderConfirmation({ code, whatsappLink, onReset }: { code: string; whatsappLink: string; onReset: () => void }) {
+  const navigate = useNavigate();
+  const [seconds, setSeconds] = useState(8);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    if (seconds <= 0) {
+      navigate({ to: "/my-orders" });
+      return;
+    }
+    const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [seconds, paused, navigate]);
+
+  return (
+    <SiteLayout>
+      <section className="mx-auto max-w-2xl px-4 py-20 sm:px-6">
+        <div className="animate-scale-in rounded-3xl border border-border bg-card p-8 text-center shadow-elevated">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success animate-scale-in">
+            <CheckCircle2 className="h-8 w-8" />
+          </div>
+          <h1 className="mt-6 font-display text-3xl font-extrabold text-foreground animate-fade-in">Order received!</h1>
+          <p className="mt-2 text-muted-foreground animate-fade-in">We've notified our team. A rider will confirm shortly.</p>
+          <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 font-mono text-sm font-semibold text-primary animate-fade-in">
+            {code}
+            <button
+              onClick={() => { navigator.clipboard.writeText(code); toast.success("Order ID copied"); }}
+              className="text-primary/70 hover:text-primary"
+              aria-label="Copy order ID"
+            ><Copy className="h-4 w-4" /></button>
+          </div>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button asChild size="lg" className="h-12 hover-scale">
+              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 h-4 w-4" /> Send details on WhatsApp
+              </a>
+            </Button>
+            <Button variant="outline" size="lg" className="h-12" onClick={() => { setPaused(true); onReset(); }}>
+              Place another order
+            </Button>
+          </div>
+
+          <div
+            className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+          >
+            Redirecting you to <span className="font-semibold text-foreground">My Orders</span> in {seconds}s…
+            <button
+              onClick={() => { setPaused(true); navigate({ to: "/my-orders" }); }}
+              className="ml-2 font-semibold text-primary hover:underline"
+            >Go now →</button>
+            <button
+              onClick={() => setPaused((p) => !p)}
+              className="ml-3 text-xs text-muted-foreground hover:text-foreground"
+            >{paused ? "Resume" : "Pause"}</button>
+            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
+              <div
+                className="h-full bg-primary transition-all duration-1000 ease-linear"
+                style={{ width: `${((8 - seconds) / 8) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </SiteLayout>
+  );
+}
+
