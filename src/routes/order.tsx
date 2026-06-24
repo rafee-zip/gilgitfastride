@@ -146,7 +146,7 @@ function OrderPage() {
       estimated_price: estimate,
     };
 
-    const { data, error } = await supabase.from("orders").insert(payload).select("order_code").single();
+    const { data, error } = await supabase.from("orders").insert(payload as never).select("order_code").single();
     setSubmitting(false);
 
     if (error) {
