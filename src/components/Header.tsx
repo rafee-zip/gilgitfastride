@@ -40,19 +40,19 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-3 z-40 w-full px-3 sm:px-4">
+      <div className="glass-nav mx-auto flex h-14 max-w-6xl items-center justify-between rounded-full px-3 pl-4 sm:h-16 sm:px-4 sm:pl-6">
         <Link to="/" className="shrink-0" onClick={() => setOpen(false)}>
           <Logo />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 md:flex">
           {NAV.map((n) => (
             <Link
               key={n.to}
               to={n.to}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              activeProps={{ className: "text-primary bg-accent/60" }}
+              className="rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-all duration-300 ease-[var(--ease-out-soft)] hover:bg-foreground/5 hover:text-foreground"
+              activeProps={{ className: "text-foreground bg-foreground/5 shadow-[inset_0_0_0_1px_rgb(15_23_42_/_0.06)]" }}
               activeOptions={{ exact: n.to === "/" }}
             >
               {n.label}
@@ -60,7 +60,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-1.5 md:flex">
           {user ? (
             <>
               {isAdmin && (
@@ -80,14 +80,14 @@ export function Header() {
               <Link to="/auth">Sign in</Link>
             </Button>
           )}
-          <Button asChild size="sm" className="shadow-soft">
+          <Button asChild size="sm">
             <Link to="/order">Place Order</Link>
           </Button>
         </div>
 
         <button
           aria-label="Toggle menu"
-          className="rounded-md p-2 md:hidden"
+          className="rounded-full p-2 transition-colors hover:bg-foreground/5 md:hidden"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -95,14 +95,14 @@ export function Header() {
       </div>
 
       {open && (
-        <div className="border-t border-border bg-background md:hidden">
-          <div className="mx-auto max-w-6xl space-y-1 px-4 py-3">
+        <div className="glass-panel mx-auto mt-2 max-w-6xl rounded-3xl p-2 md:hidden animate-fade-in">
+          <div className="space-y-1 px-2 py-2">
             {NAV.map((n) => (
               <Link
                 key={n.to}
                 to={n.to}
                 onClick={() => setOpen(false)}
-                className="block rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                className="block rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
               >
                 {n.label}
               </Link>
@@ -111,15 +111,15 @@ export function Header() {
             {user ? (
               <>
                 {isAdmin && (
-                  <Link to="/admin" onClick={() => setOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent">Admin Dashboard</Link>
+                  <Link to="/admin" onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-foreground/5">Admin Dashboard</Link>
                 )}
-                <Link to="/my-orders" onClick={() => setOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent">My Orders</Link>
-                <button onClick={() => { setOpen(false); signOut(); }} className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium hover:bg-accent">Sign out</button>
+                <Link to="/my-orders" onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-foreground/5">My Orders</Link>
+                <button onClick={() => { setOpen(false); signOut(); }} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium hover:bg-foreground/5">Sign out</button>
               </>
             ) : (
-              <Link to="/auth" onClick={() => setOpen(false)} className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent">Sign in</Link>
+              <Link to="/auth" onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-foreground/5">Sign in</Link>
             )}
-            <Link to="/order" onClick={() => setOpen(false)} className="mt-1 block rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground shadow-soft">
+            <Link to="/order" onClick={() => setOpen(false)} className="shine mt-2 block rounded-full bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_-10px_rgb(15_23_42_/_0.35)]">
               Place Order
             </Link>
           </div>
