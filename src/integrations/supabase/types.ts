@@ -17,7 +17,9 @@ export type Database = {
       orders: {
         Row: {
           admin_notes: string | null
+          amount: number | null
           created_at: string
+          currency: string
           customer_name: string
           delivery_address: string
           delivery_instructions: string | null
@@ -25,15 +27,22 @@ export type Database = {
           delivery_lng: number | null
           delivery_zone: string
           estimated_price: number | null
+          gateway_raw_response: Json | null
           id: string
           item_description: string
           item_value: number | null
           order_code: string
+          paid_at: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_provider: string | null
+          payment_reference: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
           phone: string
           pickup_address: string
           pickup_lat: number | null
           pickup_lng: number | null
           preferred_time: string | null
+          provider_transaction_id: string | null
           service_type: string
           status: Database["public"]["Enums"]["order_status"]
           updated_at: string
@@ -43,7 +52,9 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          amount?: number | null
           created_at?: string
+          currency?: string
           customer_name: string
           delivery_address: string
           delivery_instructions?: string | null
@@ -51,15 +62,22 @@ export type Database = {
           delivery_lng?: number | null
           delivery_zone?: string
           estimated_price?: number | null
+          gateway_raw_response?: Json | null
           id?: string
           item_description: string
           item_value?: number | null
-          order_code: string
+          order_code?: string
+          paid_at?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_provider?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
           phone: string
           pickup_address: string
           pickup_lat?: number | null
           pickup_lng?: number | null
           preferred_time?: string | null
+          provider_transaction_id?: string | null
           service_type?: string
           status?: Database["public"]["Enums"]["order_status"]
           updated_at?: string
@@ -69,7 +87,9 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          amount?: number | null
           created_at?: string
+          currency?: string
           customer_name?: string
           delivery_address?: string
           delivery_instructions?: string | null
@@ -77,15 +97,22 @@ export type Database = {
           delivery_lng?: number | null
           delivery_zone?: string
           estimated_price?: number | null
+          gateway_raw_response?: Json | null
           id?: string
           item_description?: string
           item_value?: number | null
           order_code?: string
+          paid_at?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_provider?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
           phone?: string
           pickup_address?: string
           pickup_lat?: number | null
           pickup_lng?: number | null
           preferred_time?: string | null
+          provider_transaction_id?: string | null
           service_type?: string
           status?: Database["public"]["Enums"]["order_status"]
           updated_at?: string
@@ -94,6 +121,44 @@ export type Database = {
           whatsapp?: string | null
         }
         Relationships: []
+      }
+      payment_events: {
+        Row: {
+          created_at: string
+          event_type: string | null
+          id: string
+          order_id: string | null
+          provider: string
+          provider_event_id: string
+          raw: Json | null
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          order_id?: string | null
+          provider: string
+          provider_event_id: string
+          raw?: Json | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          order_id?: string | null
+          provider?: string
+          provider_event_id?: string
+          raw?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pricing_settings: {
         Row: {
@@ -192,6 +257,19 @@ export type Database = {
         | "completed"
         | "rejected"
         | "cancelled"
+      payment_method:
+        | "easypaisa"
+        | "jazzcash"
+        | "card"
+        | "bank_transfer"
+        | "cod"
+      payment_status:
+        | "pending"
+        | "processing"
+        | "paid"
+        | "failed"
+        | "refunded"
+        | "cash_on_delivery"
     }
     CompositeTypes: {
       [_ in never]: never
