@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Bike, Clock, ShieldCheck, MapPin, Package, FileText, Pill, Utensils, ShoppingBag } from "lucide-react";
+import { ArrowRight, Clock, ShieldCheck, MapPin, Package, FileText, Pill, Utensils, ShoppingBag } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { Button } from "@/components/ui/button";
+import { ReviewsCard } from "@/components/ReviewsCard";
+import { DeliveryBackdrop } from "@/components/DeliveryBackdrop";
 
 export const Route = createFileRoute("/")({
   head: () => ({

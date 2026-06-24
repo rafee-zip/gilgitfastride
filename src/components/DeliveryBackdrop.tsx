@@ -42,7 +42,7 @@ export function DeliveryBackdrop() {
         return (
           <Icon
             key={i}
-            className="absolute text-foreground/70 animate-fade-in"
+            className="absolute text-muted-foreground"
             style={{
               top: item.top,
               left: item.left,
@@ -51,6 +51,7 @@ export function DeliveryBackdrop() {
               transform: `rotate(${item.rotate}deg)`,
               animation: `float 6s ease-in-out ${item.delay} infinite`,
               opacity: 0.7,
+              strokeWidth: 1.5,
             }}
           />
         );
