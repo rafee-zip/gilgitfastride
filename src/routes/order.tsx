@@ -36,17 +36,26 @@ const schema = z.object({
   item_value: z.string().optional(),
   delivery_instructions: z.string().max(500).optional().or(z.literal("")),
   preferred_time: z.string().max(80).optional().or(z.literal("")),
-  service_type: z.enum(["food", "document", "parcel", "medicine", "shopping"]),
+  service_type: z.string().trim().min(2, "Please choose or type a service").max(80),
   delivery_zone: z.enum(["within_city", "outside_city"]),
   urgent: z.boolean(),
 });
+
+const DEFAULT_SERVICES = [
+  { value: "parcel", label: "Parcel" },
+  { value: "food", label: "Food" },
+  { value: "document", label: "Document" },
+  { value: "medicine", label: "Medicine" },
+  { value: "shopping", label: "Shopping pickup" },
+] as const;
 
 type FormState = {
   customer_name: string; phone: string; whatsapp: string;
   pickup_address: string; delivery_address: string;
   item_description: string; item_value: string;
   delivery_instructions: string; preferred_time: string;
-  service_type: "food" | "document" | "parcel" | "medicine" | "shopping";
+  service_type: string;
+  service_type_choice: string; // "parcel" | ... | "other"
   delivery_zone: "within_city" | "outside_city";
   urgent: boolean;
 };
@@ -56,8 +65,10 @@ const INITIAL: FormState = {
   pickup_address: "", delivery_address: "",
   item_description: "", item_value: "",
   delivery_instructions: "", preferred_time: "",
-  service_type: "parcel", delivery_zone: "within_city", urgent: false,
+  service_type: "parcel", service_type_choice: "parcel",
+  delivery_zone: "within_city", urgent: false,
 };
+
 
 function OrderPage() {
   const navigate = useNavigate();
@@ -230,18 +241,35 @@ function OrderPage() {
             <Field label="WhatsApp number" hint="If different from phone">
               <Input type="tel" value={form.whatsapp} onChange={(e) => update("whatsapp", e.target.value)} placeholder="03XX XXXXXXX" />
             </Field>
-            <Field label="Service type" required>
-              <Select value={form.service_type} onValueChange={(v) => update("service_type", v as FormState["service_type"])}>
+            <Field label="Service type" required hint="Pick one or choose Other to type your own">
+              <Select
+                value={form.service_type_choice}
+                onValueChange={(v) => {
+                  update("service_type_choice", v);
+                  if (v !== "other") update("service_type", v);
+                  else update("service_type", "");
+                }}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="parcel">Parcel</SelectItem>
-                  <SelectItem value="food">Food</SelectItem>
-                  <SelectItem value="document">Document</SelectItem>
-                  <SelectItem value="medicine">Medicine</SelectItem>
-                  <SelectItem value="shopping">Shopping pickup</SelectItem>
+                  {DEFAULT_SERVICES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                  <SelectItem value="other">Other (type your own)</SelectItem>
                 </SelectContent>
               </Select>
+              {form.service_type_choice === "other" && (
+                <Input
+                  className="mt-2"
+                  value={form.service_type}
+                  onChange={(e) => update("service_type", e.target.value)}
+                  placeholder="e.g. Laundry pickup, gas cylinder, gift"
+                  maxLength={80}
+                  required
+                />
+              )}
             </Field>
+
           </div>
 
           <AddressField
