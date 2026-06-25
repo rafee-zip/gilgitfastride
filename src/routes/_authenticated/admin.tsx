@@ -162,7 +162,9 @@ function Admin() {
               {!isLoading && t.data.length === 0 && (
                 <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">No orders here.</div>
               )}
-              {t.data.map((o) => <OrderCard key={o.id} order={o} onUpdate={updateStatus} />)}
+              {t.key === "payments"
+                ? <PaymentsPanel orders={t.data} onUpdatePayment={updatePayment} />
+                : t.data.map((o) => <OrderCard key={o.id} order={o} onUpdate={updateStatus} />)}
             </TabsContent>
           ))}
         </Tabs>
