@@ -85,7 +85,7 @@ function Admin() {
     payment_status: OrderRow["payment_status"],
     payment_notes?: string,
   ) => {
-    const patch: Record<string, unknown> = { payment_status };
+    const patch: { payment_status: OrderRow["payment_status"]; payment_notes?: string; payment_confirmed_at?: string } = { payment_status };
     if (payment_notes !== undefined) patch.payment_notes = payment_notes;
     if (payment_status === "confirmed") patch.payment_confirmed_at = new Date().toISOString();
     const { error } = await supabase.from("orders").update(patch).eq("id", id);
