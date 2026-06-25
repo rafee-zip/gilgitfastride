@@ -80,6 +80,19 @@ function Admin() {
     else { toast.success(`Order ${status}`); qc.invalidateQueries({ queryKey: ["admin-orders"] }); }
   };
 
+  const updatePayment = async (
+    id: string,
+    payment_status: OrderRow["payment_status"],
+    payment_notes?: string,
+  ) => {
+    const patch: Record<string, unknown> = { payment_status };
+    if (payment_notes !== undefined) patch.payment_notes = payment_notes;
+    if (payment_status === "confirmed") patch.payment_confirmed_at = new Date().toISOString();
+    const { error } = await supabase.from("orders").update(patch).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success(`Payment ${payment_status}`); qc.invalidateQueries({ queryKey: ["admin-orders"] }); }
+  };
+
   if (isAdmin === null) {
     return <SiteLayout><div className="flex h-96 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div></SiteLayout>;
   }
