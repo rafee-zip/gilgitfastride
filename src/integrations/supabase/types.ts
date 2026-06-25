@@ -29,6 +29,10 @@ export type Database = {
           item_description: string
           item_value: number | null
           order_code: string
+          payment_confirmed_at: string | null
+          payment_notes: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          payment_submitted_at: string | null
           phone: string
           pickup_address: string
           pickup_lat: number | null
@@ -55,6 +59,10 @@ export type Database = {
           item_description: string
           item_value?: number | null
           order_code: string
+          payment_confirmed_at?: string | null
+          payment_notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          payment_submitted_at?: string | null
           phone: string
           pickup_address: string
           pickup_lat?: number | null
@@ -81,6 +89,10 @@ export type Database = {
           item_description?: string
           item_value?: number | null
           order_code?: string
+          payment_confirmed_at?: string | null
+          payment_notes?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          payment_submitted_at?: string | null
           phone?: string
           pickup_address?: string
           pickup_lat?: number | null
@@ -170,6 +182,30 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_settings: {
+        Row: {
+          business_number: string
+          id: string
+          message_template: string
+          payment_instructions: string
+          updated_at: string
+        }
+        Insert: {
+          business_number?: string
+          id?: string
+          message_template?: string
+          payment_instructions?: string
+          updated_at?: string
+        }
+        Update: {
+          business_number?: string
+          id?: string
+          message_template?: string
+          payment_instructions?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -192,6 +228,7 @@ export type Database = {
         | "completed"
         | "rejected"
         | "cancelled"
+      payment_status: "pending" | "submitted" | "confirmed" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -328,6 +365,7 @@ export const Constants = {
         "rejected",
         "cancelled",
       ],
+      payment_status: ["pending", "submitted", "confirmed", "rejected"],
     },
   },
 } as const

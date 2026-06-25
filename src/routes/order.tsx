@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Copy, MessageCircle, MapPin, Loader2, Zap } from "lucide-react";
+import { CheckCircle2, Copy, MessageCircle, MapPin, Loader2, Zap, CreditCard } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { OWNER } from "@/components/Footer";
 import { toast } from "sonner";
+import { buildPaymentWhatsAppLink, DEFAULT_WHATSAPP_SETTINGS, PAYMENT_STATUS_META, type WhatsAppSettings } from "@/lib/payment";
 
 export const Route = createFileRoute("/order")({
   head: () => ({
@@ -74,7 +75,14 @@ function OrderPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<FormState>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
-  const [confirmed, setConfirmed] = useState<null | { code: string; whatsappLink: string }>(null);
+  const [confirmed, setConfirmed] = useState<null | {
+    id: string;
+    code: string;
+    customer_name: string;
+    phone: string;
+    amount: number | null;
+    detailsLink: string;
+  }>(null);
 
   const { data: pricing } = useQuery({
     queryKey: ["pricing"],
@@ -157,7 +165,11 @@ function OrderPage() {
       estimated_price: estimate,
     };
 
-    const { data, error } = await supabase.from("orders").insert(payload as never).select("order_code").single();
+    const { data, error } = await supabase
+      .from("orders")
+      .insert(payload as never)
+      .select("id, order_code")
+      .single();
     setSubmitting(false);
 
     if (error) {
@@ -167,6 +179,7 @@ function OrderPage() {
     }
 
     const code = data.order_code as string;
+    const orderId = data.id as string;
     const message =
       `🛵 *New Gilgit FastRide Order*\n` +
       `Order: *${code}*\n\n` +
@@ -182,13 +195,20 @@ function OrderPage() {
       (payload.delivery_instructions ? `📝 Notes: ${payload.delivery_instructions}\n` : "") +
       (payload.preferred_time ? `⏰ Preferred time: ${payload.preferred_time}\n` : "");
 
-    const whatsappLink = `https://wa.me/${OWNER.whatsapp}?text=${encodeURIComponent(message)}`;
-    setConfirmed({ code, whatsappLink });
+    const detailsLink = `https://wa.me/${OWNER.whatsapp}?text=${encodeURIComponent(message)}`;
+    setConfirmed({
+      id: orderId,
+      code,
+      customer_name: payload.customer_name,
+      phone: payload.phone,
+      amount: estimate,
+      detailsLink,
+    });
     toast.success(`Order ${code} received!`);
   };
 
   if (confirmed) {
-    return <OrderConfirmation code={confirmed.code} whatsappLink={confirmed.whatsappLink} onReset={() => { setConfirmed(null); setForm(INITIAL); }} />;
+    return <OrderConfirmation {...confirmed} onReset={() => { setConfirmed(null); setForm(INITIAL); }} />;
   }
 
 
@@ -344,70 +364,127 @@ function AddressField({ label, value, onChange, onGps, placeholder }: {
   );
 }
 
-function OrderConfirmation({ code, whatsappLink, onReset }: { code: string; whatsappLink: string; onReset: () => void }) {
+type ConfirmationProps = {
+  id: string;
+  code: string;
+  customer_name: string;
+  phone: string;
+  amount: number | null;
+  detailsLink: string;
+  onReset: () => void;
+};
+
+function OrderConfirmation({ id, code, customer_name, phone, amount, detailsLink, onReset }: ConfirmationProps) {
   const navigate = useNavigate();
-  const [seconds, setSeconds] = useState(8);
-  const [paused, setPaused] = useState(false);
+  const [seconds, setSeconds] = useState(20);
+  const [paused, setPaused] = useState(true); // start paused — payment step matters
+  const [paymentStatus, setPaymentStatus] = useState<"pending" | "submitted">("pending");
+  const [marking, setMarking] = useState(false);
+  const [settings, setSettings] = useState<WhatsAppSettings>(DEFAULT_WHATSAPP_SETTINGS);
+
+  useEffect(() => {
+    supabase.from("whatsapp_settings").select("business_number,payment_instructions,message_template").eq("id", "default").maybeSingle()
+      .then(({ data }) => { if (data) setSettings(data as WhatsAppSettings); });
+  }, []);
 
   useEffect(() => {
     if (paused) return;
-    if (seconds <= 0) {
-      navigate({ to: "/my-orders" });
-      return;
-    }
+    if (seconds <= 0) { navigate({ to: "/my-orders" }); return; }
     const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [seconds, paused, navigate]);
 
+  const paymentLink = buildPaymentWhatsAppLink(settings, {
+    order_code: code, customer_name, phone, amount: amount ?? "—",
+  });
+
+  const handlePayClick = async () => {
+    setMarking(true);
+    // Best-effort mark as submitted (only works for signed-in customers; guests stay pending)
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) {
+      await supabase.from("orders")
+        .update({ payment_status: "submitted", payment_submitted_at: new Date().toISOString() })
+        .eq("id", id);
+    }
+    setPaymentStatus("submitted");
+    setMarking(false);
+    window.open(paymentLink, "_blank", "noopener,noreferrer");
+  };
+
+  const statusMeta = PAYMENT_STATUS_META[paymentStatus];
+
   return (
     <SiteLayout>
-      <section className="mx-auto max-w-2xl px-4 py-20 sm:px-6">
+      <section className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
         <div className="animate-scale-in rounded-3xl border border-border bg-card p-8 text-center shadow-elevated">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success animate-scale-in">
             <CheckCircle2 className="h-8 w-8" />
           </div>
           <h1 className="mt-6 font-display text-3xl font-extrabold text-foreground animate-fade-in">Order received!</h1>
-          <p className="mt-2 text-muted-foreground animate-fade-in">We've notified our team. A rider will confirm shortly.</p>
-          <div className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 font-mono text-sm font-semibold text-primary animate-fade-in">
-            {code}
-            <button
-              onClick={() => { navigator.clipboard.writeText(code); toast.success("Order ID copied"); }}
-              className="text-primary/70 hover:text-primary"
-              aria-label="Copy order ID"
-            ><Copy className="h-4 w-4" /></button>
+          <p className="mt-2 text-muted-foreground animate-fade-in">One last step — confirm your payment on WhatsApp so we can dispatch a rider.</p>
+
+          <div className="mx-auto mt-6 flex flex-wrap items-center justify-center gap-2 animate-fade-in">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 font-mono text-sm font-semibold text-primary">
+              {code}
+              <button
+                onClick={() => { navigator.clipboard.writeText(code); toast.success("Order / Tracking ID copied"); }}
+                className="text-primary/70 hover:text-primary"
+                aria-label="Copy order ID"
+              ><Copy className="h-4 w-4" /></button>
+            </div>
+            <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${statusMeta.cls}`}>
+              <span aria-hidden>{statusMeta.emoji}</span> {statusMeta.label}
+            </span>
           </div>
+
+          {amount != null && (
+            <div className="mt-4 text-sm text-muted-foreground">
+              Amount due: <span className="font-bold text-foreground">Rs. {amount}</span>
+            </div>
+          )}
+
+          {settings.payment_instructions && (
+            <p className="mt-4 mx-auto max-w-md text-xs text-muted-foreground whitespace-pre-wrap">{settings.payment_instructions}</p>
+          )}
+
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button asChild size="lg" className="h-12 hover-scale">
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="mr-2 h-4 w-4" /> Send details on WhatsApp
-              </a>
+            <Button
+              size="lg"
+              className="h-12 bg-[#25D366] text-white hover:bg-[#1FB855] shadow-elevated"
+              onClick={handlePayClick}
+              disabled={marking}
+            >
+              {marking
+                ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Opening WhatsApp…</>
+                : <><CreditCard className="mr-2 h-4 w-4" /> Pay &amp; Confirm Order on WhatsApp</>}
             </Button>
-            <Button variant="outline" size="lg" className="h-12" onClick={() => { setPaused(true); onReset(); }}>
-              Place another order
+            <Button asChild variant="outline" size="lg" className="h-12">
+              <a href={detailsLink} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 h-4 w-4" /> Send full order details
+              </a>
             </Button>
           </div>
 
-          <div
-            className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-          >
-            Redirecting you to <span className="font-semibold text-foreground">My Orders</span> in {seconds}s…
-            <button
-              onClick={() => { setPaused(true); navigate({ to: "/my-orders" }); }}
-              className="ml-2 font-semibold text-primary hover:underline"
-            >Go now →</button>
-            <button
-              onClick={() => setPaused((p) => !p)}
-              className="ml-3 text-xs text-muted-foreground hover:text-foreground"
-            >{paused ? "Resume" : "Pause"}</button>
-            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
-              <div
-                className="h-full bg-primary transition-all duration-1000 ease-linear"
-                style={{ width: `${((8 - seconds) / 8) * 100}%` }}
-              />
-            </div>
+          <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
+            <button onClick={() => navigate({ to: "/my-orders" })} className="font-semibold text-primary hover:underline">
+              Track in My Orders →
+            </button>
+            <button onClick={onReset} className="text-muted-foreground hover:text-foreground">
+              Place another order
+            </button>
           </div>
+
+
+          {!paused && (
+            <div className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">
+              Redirecting you to <span className="font-semibold text-foreground">My Orders</span> in {seconds}s…
+              <button onClick={() => setPaused(true)} className="ml-3 text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
+                <div className="h-full bg-primary transition-all duration-1000 ease-linear" style={{ width: `${((20 - seconds) / 20) * 100}%` }} />
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </SiteLayout>
