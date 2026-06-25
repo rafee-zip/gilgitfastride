@@ -123,6 +123,7 @@ function Admin() {
     { key: "pending", label: "Pending", data: orders?.filter((o) => o.status === "pending") ?? [] },
     { key: "active", label: "Active", data: orders?.filter((o) => o.status === "accepted" || o.status === "in_progress") ?? [] },
     { key: "completed", label: "Completed", data: orders?.filter((o) => o.status === "completed") ?? [] },
+    { key: "payments", label: "Payments", data: orders ?? [] },
     { key: "all", label: "All", data: orders ?? [] },
   ];
 
