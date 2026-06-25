@@ -32,6 +32,10 @@ type OrderRow = {
   service_type: string; delivery_zone: string; urgent: boolean;
   estimated_price: number | null;
   status: "pending" | "accepted" | "in_progress" | "completed" | "rejected" | "cancelled";
+  payment_status: "pending" | "submitted" | "confirmed" | "rejected";
+  payment_notes: string | null;
+  payment_submitted_at: string | null;
+  payment_confirmed_at: string | null;
   admin_notes: string | null; created_at: string; updated_at: string;
 };
 
