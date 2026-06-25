@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Copy, MessageCircle, MapPin, Loader2, Zap } from "lucide-react";
+import { CheckCircle2, Copy, MessageCircle, MapPin, Loader2, Zap, CreditCard } from "lucide-react";
 import { SiteLayout } from "@/components/SiteLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { OWNER } from "@/components/Footer";
 import { toast } from "sonner";
+import { buildPaymentWhatsAppLink, DEFAULT_WHATSAPP_SETTINGS, PAYMENT_STATUS_META, type WhatsAppSettings } from "@/lib/payment";
 
 export const Route = createFileRoute("/order")({
   head: () => ({
