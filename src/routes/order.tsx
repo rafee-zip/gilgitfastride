@@ -165,7 +165,11 @@ function OrderPage() {
       estimated_price: estimate,
     };
 
-    const { data, error } = await supabase.from("orders").insert(payload as never).select("order_code").single();
+    const { data, error } = await supabase
+      .from("orders")
+      .insert(payload as never)
+      .select("id, order_code")
+      .single();
     setSubmitting(false);
 
     if (error) {
@@ -175,6 +179,7 @@ function OrderPage() {
     }
 
     const code = data.order_code as string;
+    const orderId = data.id as string;
     const message =
       `🛵 *New Gilgit FastRide Order*\n` +
       `Order: *${code}*\n\n` +
@@ -190,13 +195,20 @@ function OrderPage() {
       (payload.delivery_instructions ? `📝 Notes: ${payload.delivery_instructions}\n` : "") +
       (payload.preferred_time ? `⏰ Preferred time: ${payload.preferred_time}\n` : "");
 
-    const whatsappLink = `https://wa.me/${OWNER.whatsapp}?text=${encodeURIComponent(message)}`;
-    setConfirmed({ code, whatsappLink });
+    const detailsLink = `https://wa.me/${OWNER.whatsapp}?text=${encodeURIComponent(message)}`;
+    setConfirmed({
+      id: orderId,
+      code,
+      customer_name: payload.customer_name,
+      phone: payload.phone,
+      amount: estimate,
+      detailsLink,
+    });
     toast.success(`Order ${code} received!`);
   };
 
   if (confirmed) {
-    return <OrderConfirmation code={confirmed.code} whatsappLink={confirmed.whatsappLink} onReset={() => { setConfirmed(null); setForm(INITIAL); }} />;
+    return <OrderConfirmation {...confirmed} onReset={() => { setConfirmed(null); setForm(INITIAL); }} />;
   }
 
 
