@@ -326,3 +326,190 @@ function PricingEditor() {
     </>
   );
 }
+
+function PaymentsPanel({
+  orders,
+  onUpdatePayment,
+}: {
+  orders: OrderRow[];
+  onUpdatePayment: (id: string, s: OrderRow["payment_status"], notes?: string) => void;
+}) {
+  const filters = [
+    { key: "pending",   label: "Payment Pending" },
+    { key: "submitted", label: "Awaiting Verification" },
+    { key: "confirmed", label: "Payment Confirmed" },
+    { key: "rejected",  label: "Payment Rejected" },
+  ] as const;
+  const [active, setActive] = useState<typeof filters[number]["key"]>("submitted");
+  const list = orders.filter((o) => (o.payment_status ?? "pending") === active);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        {filters.map((f) => {
+          const count = orders.filter((o) => (o.payment_status ?? "pending") === f.key).length;
+          const isActive = active === f.key;
+          return (
+            <button
+              key={f.key}
+              onClick={() => setActive(f.key)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                isActive ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {f.label} <span className="ml-1 opacity-70">({count})</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {list.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+          No orders here.
+        </div>
+      )}
+
+      {list.map((o) => <PaymentRow key={o.id} order={o} onUpdate={onUpdatePayment} />)}
+    </div>
+  );
+}
+
+function PaymentRow({
+  order,
+  onUpdate,
+}: {
+  order: OrderRow;
+  onUpdate: (id: string, s: OrderRow["payment_status"], notes?: string) => void;
+}) {
+  const [notes, setNotes] = useState(order.payment_notes ?? "");
+  const meta = PAYMENT_STATUS_META[order.payment_status ?? "pending"];
+  const whatsAppLink = order.whatsapp || order.phone
+    ? `https://wa.me/${(order.whatsapp ?? order.phone).replace(/^0/, "92").replace(/\D/g, "")}`
+    : null;
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="font-mono text-sm font-semibold text-primary">{order.order_code}</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">
+            Tracking: <span className="font-mono">{order.order_code}</span> • {new Date(order.created_at).toLocaleString()}
+          </div>
+          <div className="mt-2 text-sm">
+            <span className="font-medium text-foreground">{order.customer_name}</span>
+            <span className="ml-2 text-muted-foreground">{order.phone}</span>
+          </div>
+          <div className="mt-1 text-sm font-bold text-foreground">Rs. {order.estimated_price ?? "—"}</div>
+        </div>
+        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${meta.cls}`}>
+          <span aria-hidden>{meta.emoji}</span> {meta.label}
+        </span>
+      </div>
+
+      <div className="mt-3">
+        <Label className="text-xs">Payment notes</Label>
+        <Textarea
+          rows={2}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="e.g. JazzCash TID 12345 verified at 4:21 PM"
+        />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => onUpdate(order.id, "confirmed", notes)}>
+          <CheckCircle2 className="mr-1 h-3 w-3" /> Confirm payment
+        </Button>
+        <Button size="sm" variant="destructive" onClick={() => onUpdate(order.id, "rejected", notes)}>
+          <XCircle className="mr-1 h-3 w-3" /> Reject
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onUpdate(order.id, "pending", notes)}>
+          Reset to pending
+        </Button>
+        {whatsAppLink && (
+          <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="ml-auto">
+            <Button size="sm" variant="ghost"><MessageCircle className="mr-1 h-3 w-3" />WhatsApp customer</Button>
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WhatsAppSettingsEditor() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const { data } = useQuery({
+    queryKey: ["whatsapp-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("whatsapp_settings")
+        .select("*")
+        .eq("id", "default")
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const [number, setNumber] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [template, setTemplate] = useState("");
+
+  useEffect(() => {
+    if (data) {
+      setNumber(data.business_number ?? "");
+      setInstructions(data.payment_instructions ?? "");
+      setTemplate((data.message_template ?? "").replace(/\\n/g, "\n"));
+    }
+  }, [data]);
+
+  const save = async () => {
+    const { error } = await supabase
+      .from("whatsapp_settings")
+      .update({
+        business_number: number.trim(),
+        payment_instructions: instructions,
+        message_template: template,
+      })
+      .eq("id", "default");
+    if (error) { toast.error(error.message); return; }
+    toast.success("WhatsApp settings saved");
+    qc.invalidateQueries({ queryKey: ["whatsapp-settings"] });
+    setOpen(false);
+  };
+
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Settings className="mr-1 h-3 w-3" /> WhatsApp settings
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><CreditCard className="h-4 w-4" /> WhatsApp payment settings</DialogTitle>
+            <DialogDescription>
+              Used for the "Pay &amp; Confirm Order on WhatsApp" button. Placeholders: {"{order_code}"}, {"{customer_name}"}, {"{phone}"}, {"{amount}"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Business WhatsApp number</Label>
+              <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="923XXXXXXXXX (no + sign)" />
+            </div>
+            <div>
+              <Label>Payment instructions (shown to customers)</Label>
+              <Textarea rows={3} value={instructions} onChange={(e) => setInstructions(e.target.value)} />
+            </div>
+            <div>
+              <Label>WhatsApp message template</Label>
+              <Textarea rows={8} value={template} onChange={(e) => setTemplate(e.target.value)} className="font-mono text-xs" />
+            </div>
+          </div>
+          <Button onClick={save} className="mt-2"><Save className="mr-1 h-4 w-4" />Save</Button>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
