@@ -75,7 +75,14 @@ function OrderPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState<FormState>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
-  const [confirmed, setConfirmed] = useState<null | { code: string; whatsappLink: string }>(null);
+  const [confirmed, setConfirmed] = useState<null | {
+    id: string;
+    code: string;
+    customer_name: string;
+    phone: string;
+    amount: number | null;
+    detailsLink: string;
+  }>(null);
 
   const { data: pricing } = useQuery({
     queryKey: ["pricing"],
