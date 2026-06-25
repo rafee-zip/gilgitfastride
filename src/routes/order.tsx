@@ -476,27 +476,15 @@ function OrderConfirmation({ id, code, customer_name, phone, amount, detailsLink
           </div>
 
 
-          <div
-            className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-          >
-            Redirecting you to <span className="font-semibold text-foreground">My Orders</span> in {seconds}s…
-            <button
-              onClick={() => { setPaused(true); navigate({ to: "/my-orders" }); }}
-              className="ml-2 font-semibold text-primary hover:underline"
-            >Go now →</button>
-            <button
-              onClick={() => setPaused((p) => !p)}
-              className="ml-3 text-xs text-muted-foreground hover:text-foreground"
-            >{paused ? "Resume" : "Pause"}</button>
-            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
-              <div
-                className="h-full bg-primary transition-all duration-1000 ease-linear"
-                style={{ width: `${((8 - seconds) / 8) * 100}%` }}
-              />
+          {!paused && (
+            <div className="mt-8 rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">
+              Redirecting you to <span className="font-semibold text-foreground">My Orders</span> in {seconds}s…
+              <button onClick={() => setPaused(true)} className="ml-3 text-xs text-muted-foreground hover:text-foreground">Cancel</button>
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
+                <div className="h-full bg-primary transition-all duration-1000 ease-linear" style={{ width: `${((20 - seconds) / 20) * 100}%` }} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
     </SiteLayout>
