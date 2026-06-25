@@ -12,9 +12,11 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { ShieldCheck, Loader2, CheckCircle2, XCircle, Truck, Clock, Pencil, Save, MessageCircle, Phone } from "lucide-react";
+import { ShieldCheck, Loader2, CheckCircle2, XCircle, Truck, Clock, Pencil, Save, MessageCircle, Phone, CreditCard, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { OWNER } from "@/components/Footer";
+import { PAYMENT_STATUS_META } from "@/lib/payment";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin Dashboard — Gilgit FastRide" }] }),
