@@ -1,9 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { SiteLayout } from "@/components/SiteLayout";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Package, Clock, CheckCircle2, XCircle, Truck } from "lucide-react";
+import { Package, Clock, CheckCircle2, XCircle, Truck, CreditCard } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+  buildPaymentWhatsAppLink,
+  DEFAULT_WHATSAPP_SETTINGS,
+  PAYMENT_STATUS_META,
+  type WhatsAppSettings,
+} from "@/lib/payment";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/my-orders")({
   head: () => ({ meta: [{ title: "My Orders — Gilgit FastRide" }] }),
@@ -20,7 +29,13 @@ const STATUS_META: Record<string, { label: string; icon: typeof Clock; cls: stri
 };
 
 function MyOrders() {
-  const { data, isLoading } = useQuery({
+  const [settings, setSettings] = useState<WhatsAppSettings>(DEFAULT_WHATSAPP_SETTINGS);
+  useEffect(() => {
+    supabase.from("whatsapp_settings").select("business_number,payment_instructions,message_template").eq("id", "default").maybeSingle()
+      .then(({ data }) => { if (data) setSettings(data as WhatsAppSettings); });
+  }, []);
+
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["my-orders"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -31,6 +46,22 @@ function MyOrders() {
       return data;
     },
   });
+
+  const handlePay = async (order: { id: string; order_code: string; customer_name: string; phone: string; estimated_price: number | null }) => {
+    const link = buildPaymentWhatsAppLink(settings, {
+      order_code: order.order_code,
+      customer_name: order.customer_name,
+      phone: order.phone,
+      amount: order.estimated_price ?? "—",
+    });
+    const { error } = await supabase
+      .from("orders")
+      .update({ payment_status: "submitted", payment_submitted_at: new Date().toISOString() })
+      .eq("id", order.id);
+    if (error) toast.error("Could not update payment status");
+    else { toast.success("Marked as submitted — admin will verify"); refetch(); }
+    window.open(link, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <SiteLayout>
@@ -50,6 +81,8 @@ function MyOrders() {
           )}
           {data?.map((o) => {
             const meta = STATUS_META[o.status] ?? STATUS_META.pending;
+            const pay = PAYMENT_STATUS_META[o.payment_status ?? "pending"];
+            const showPayCta = (o.payment_status ?? "pending") === "pending" || (o.payment_status ?? "pending") === "rejected";
             return (
               <div key={o.id} className="rounded-2xl border border-border bg-card p-5 shadow-soft sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -59,9 +92,14 @@ function MyOrders() {
                       {new Date(o.created_at).toLocaleString()} • {o.service_type}
                     </div>
                   </div>
-                  <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${meta.cls}`}>
-                    <meta.icon className="h-3 w-3" /> {meta.label}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${pay.cls}`}>
+                      <span aria-hidden>{pay.emoji}</span> {pay.label}
+                    </span>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${meta.cls}`}>
+                      <meta.icon className="h-3 w-3" /> {meta.label}
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <Row label="Pickup">{o.pickup_address}</Row>
@@ -69,6 +107,24 @@ function MyOrders() {
                   <Row label="Item">{o.item_description}</Row>
                   <Row label="Estimated">Rs. {o.estimated_price ?? "—"}</Row>
                 </div>
+
+                {showPayCta && (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                    <p className="text-xs text-muted-foreground">
+                      Confirm your payment on WhatsApp so we can dispatch a rider.
+                    </p>
+                    <Button
+                      size="sm"
+                      className="bg-[#25D366] text-white hover:bg-[#1FB855]"
+                      onClick={() => handlePay({
+                        id: o.id, order_code: o.order_code, customer_name: o.customer_name,
+                        phone: o.phone, estimated_price: o.estimated_price ?? null,
+                      })}
+                    >
+                      <CreditCard className="mr-1.5 h-3.5 w-3.5" /> Pay &amp; Confirm on WhatsApp
+                    </Button>
+                  </div>
+                )}
               </div>
             );
           })}
