@@ -212,9 +212,15 @@ function OrderCard({ order, onUpdate }: { order: OrderRow; onUpdate: (id: string
             {new Date(order.created_at).toLocaleString()} • {order.service_type} • {order.delivery_zone.replace("_", " ")}
           </div>
         </div>
-        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${statusBadge[status]}`}>
-          <StatusIcon className="h-3 w-3" /> {status.replace("_", " ")}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${PAYMENT_STATUS_META[order.payment_status ?? "pending"].cls}`}>
+            <span aria-hidden>{PAYMENT_STATUS_META[order.payment_status ?? "pending"].emoji}</span>
+            {PAYMENT_STATUS_META[order.payment_status ?? "pending"].label}
+          </span>
+          <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${statusBadge[status]}`}>
+            <StatusIcon className="h-3 w-3" /> {status.replace("_", " ")}
+          </span>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
