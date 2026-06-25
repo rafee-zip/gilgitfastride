@@ -135,7 +135,10 @@ function Admin() {
             <h1 className="font-display text-3xl font-extrabold text-foreground sm:text-4xl">Admin Dashboard</h1>
             <p className="mt-1 text-sm text-muted-foreground">Live order management for Gilgit FastRide.</p>
           </div>
-          <PricingEditor />
+          <div className="flex flex-wrap gap-2">
+            <WhatsAppSettingsEditor />
+            <PricingEditor />
+          </div>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
